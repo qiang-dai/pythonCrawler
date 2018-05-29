@@ -63,6 +63,11 @@ for i in range(index, index+30):
     sleep(randint(1,5))
 
     response = urllib.request.urlopen(url)
+    dlurl = response.geturl()
+    if dlurl != url:
+        print('end to url index')
+        break
+
     html = response.read()
     #print (datetime.now(), 'html=', html.decode('utf8'))
     soup = BeautifulSoup(html.decode('utf8'), "lxml")
@@ -98,4 +103,4 @@ for i in range(index, index+30):
         """
         
         subprocess.call("osascript -e '{}'".format(applescript), shell=True)
-    break
+        break
