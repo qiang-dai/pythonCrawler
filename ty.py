@@ -56,7 +56,7 @@ try:
 except:
     index = 1
 
-for i in range(index, index+5):
+for i in range(index, index+30):
     url = 'http://bbs.tianya.cn/post-stocks-1959291-%s.shtml'%i
     print(datetime.now(), 'url:', url)
 
