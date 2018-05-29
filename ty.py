@@ -1,6 +1,11 @@
-import http.cookiejar,urllib,sys,time,http
+#!/usr/local/bin/python3
+
+import http.cookiejar,urllib,sys,time,http,os,sys
 from bs4 import BeautifulSoup
 import subprocess
+from random import randint
+from time import sleep
+from datetime import datetime
 
 ###模拟登录
 cj=http.cookiejar.CookieJar()
@@ -15,7 +20,7 @@ exheaders=[
     ('Connection','keep-alive'),
     ('Content-Type','application/x-www-form-urlencoded')
 ]
-password = open('password.txt').read()
+password = open(os.path.dirname(__file__) + '/password.txt').read()
 opener.addheaders=exheaders
 loginurl='https://passport.tianya.cn/login?from=index&_goto=login'
 postdate=urllib.parse.urlencode({'vwriter': 'flameday',
@@ -24,15 +29,46 @@ postdate=urllib.parse.urlencode({'vwriter': 'flameday',
 re=opener.open(loginurl,postdate.encode('utf-8'))
 #print (re.info())
 
-for i in range(13, 20):
-    response = urllib.request.urlopen('http://bbs.tianya.cn/post-stocks-1959291-%s.shtml'%i)
-    html = response.read()
-    #print ('html=', html.decode('utf8'))
-    soup = BeautifulSoup(html.decode('utf8'))
-
-    f = open('time.txt', 'r')
+def get_time():
+    f = open(os.path.dirname(__file__) + '/time.txt', 'r')
     last_time = f.read()
     f.close()
+    return last_time
+def write_time(time_val):
+    f = open(os.path.dirname(__file__) + '/time.txt', 'w')
+    f.write(time_val)
+    f.close()
+
+def get_index():
+    f = open(os.path.dirname(__file__) + '/index.txt', 'r')
+    last_index = f.read()
+    f.close()
+    return last_index
+
+def write_index(index_val):
+    f = open(os.path.dirname(__file__) + '/index.txt', 'w')
+    f.write(str(index_val))
+    f.close()
+
+index = get_index()
+try:
+    index = int(index)
+except:
+    index = 1
+
+for i in range(index, index+5):
+    url = 'http://bbs.tianya.cn/post-stocks-1959291-%s.shtml'%i
+    print(datetime.now(), 'url:', url)
+
+    sleep(randint(1,5))
+
+    response = urllib.request.urlopen(url)
+    html = response.read()
+    #print (datetime.now(), 'html=', html.decode('utf8'))
+    soup = BeautifulSoup(html.decode('utf8'), "lxml")
+
+    ###get time
+    last_time = get_time()
 
     time_list = []
     for div in soup.find_all("div", class_='atl-item'):
@@ -40,26 +76,26 @@ for i in range(13, 20):
         #print(div.name)
         #print(div.attrs['js_username'], div.attrs['js_restime'])
         #print(div.attrs)
-        if div.attrs['js_username'] == '量子之鹰':
+        if 'js_username' in div.attrs and div.attrs['js_username'] == '量子之鹰':
             matched = True
             time_list.append(div.attrs['js_restime'])
-            print(div.attrs['js_username'], div.attrs['js_restime'])
-    print('last_time:', last_time)
-    print('time_list:', time_list)
+            try:
+                print(datetime.now(), div.attrs['js_username'].encode('utf8'), div.attrs['js_restime'].encode('utf8'))
+            except e:
+                pass
+    print(datetime.now(), 'last_time:', last_time)
+    print(datetime.now(), 'time_list:', time_list)
 
-if len(time_list) > 0 and time_list[-1] != last_time:
-    f = open('time.txt', 'w')
-    print('wirte...', time_list[-1])
-    f.write(time_list[-1])
-    f.flush()
-
-    applescript = """
-        display dialog "量子之鹰说话了..." ¬
-with title "This is a pop-up window" ¬
-with icon caution ¬
-buttons {"OK"}
-    """
+    if len(time_list) > 0 and time_list[-1] != last_time:
+        write_time(time_list[-1])
+        write_index(i)
     
-    subprocess.call("osascript -e '{}'".format(applescript), shell=True)
-
-f.close()
+        applescript = """
+            display dialog "量子之鹰说话了..." ¬
+    with title "This is a pop-up window" ¬
+    with icon caution ¬
+    buttons {"OK"}
+        """
+        
+        subprocess.call("osascript -e '{}'".format(applescript), shell=True)
+    break
